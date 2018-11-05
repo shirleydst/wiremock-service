@@ -1,18 +1,18 @@
+dist: trusty
 language: java
 jdk:
   - oraclejdk8
+git:
+  depth: 3
 cache:
   directories:
     - "$HOME/.m2"
 before_install:
   - git clone https://github.com/CJSCommonPlatform/travis-settings.git target/travis-settings
-install:
-  - cp -f $JAVA_HOME/jre/lib/security/cacerts target/travis-settings/cacerts
-  - chmod u+w target/travis-settings/cacerts
-  - $JAVA_HOME/jre/bin/keytool -import -v -noprompt -storepass changeit -storetype jks -trustcacerts -alias IndigoBlueRoot -file target/travis-settings/ROOT-CA.crt -keystore target/travis-settings/cacerts
-script: mvn -Djavax.net.ssl.trustStore=$PWD/target/travis-settings/cacerts -B -V -U --settings target/travis-settings/settings.xml verify
-after_success:
-  - '[[ $TRAVIS_BRANCH == "master" && $TRAVIS_PULL_REQUEST == "false" ]] || [[ $TRAVIS_TAG == release-* ]] && mvn -Djavax.net.ssl.trustStore=$PWD/target/travis-settings/cacerts -DskipTests=true -B -V --errors deploy --settings target/travis-settings/settings.xml'
+  - ln -sfT ${PWD}/target/travis-settings/settings.xml ${HOME}/.m2/settings.xml
+install: "${PWD}/target/travis-settings/java/install.sh -e -q -DexcludeGroupIds=uk.gov.justice.service,uk.gov.justice.services"
+script: "${PWD}/target/travis-settings/java/script-install.sh coveralls:report sonar:sonar"
+after_success: "${PWD}/target/travis-settings/java/after_success.sh"
 notifications:
   slack:
     secure: XDkSlyE8QmWhPxX5fxibcLHjds2q/bXZcHHSKAzWyQRzXuy6xOEC63lZUPu7Q+XdcnPhOZRASgE7VCgzDTCSeCdt3bUaIYJLo7Kn94oNucB51h6WksK/BZyBo4dWY2s5h8DUkEpjBmz6ohNuP6T47lNYGZfo8DnzlKsXrC4Wo25hR4CDrt9/JmC6+cm9DlCSyqGq/EhcPcAtwKocpdKtd3311JClB3kZOEmEyyCYpKkzwLkuzmexKfVW/tyAwtdZ6zcDwIQKGN3dBdToXZiMBy0TrRz2EwFJoAeCny9GYAazi359EW5zYjLZa3zs6itVEIxwFaYFxPnFEQbg+4MVT4eyc635ioiCPALd0kOU02J1aVbSP2nU3lKL/2urCUWhtimnS+ksXrkHuq2ITsgFSzIq3xp8zZROk14yME/o52woj4WeiW02Ks1ccXoWrTiUpaw+A7URRx/hgR7xEpND+m8OgUufoKDlo50+nS2UIbWdGVmmWYzaHUB2Wus/VsuAJk/uILr/fFKwnU73Qy4BjBMHWhFjnvoH04WXtBed2ebxydNGQ5AVjvwlMNm4nKPM8SGPvLjYMBzn7+20E1o+b4rDPS9PCpSjcdRC/2Ngs/X5PRGHBWJmoZnBq6yAn4wKLKfzPFwPBqezgFQk5cGMORTqaUNMbCYfsswERw0lR4Y=
